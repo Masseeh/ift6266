@@ -1,6 +1,6 @@
 import sys
 import os
-import time
+import timeit
 
 import numpy as np
 import theano
@@ -79,56 +79,6 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
         }
     )
 
-    # Finally, launch the training loop.
-    print("Starting training...")
-    # We iterate over epochs:
-    for epoch in range(n_epochs):
-        # In each epoch, we do a full pass over the training data:
-        train_err = 0
-        train_batches = 0
-        start_time = time.time()
-        for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
-            inputs, targets = batch
-            train_err += train_fn(inputs, targets)
-            train_batches += 1
-
-        # And a full pass over the validation data:
-        val_err = 0
-        val_acc = 0
-        val_batches = 0
-        for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
-            inputs, targets = batch
-            err, acc = val_fn(inputs, targets)
-            val_err += err
-            val_acc += acc
-            val_batches += 1
-
-        # Then we print the results for this epoch:
-        print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - start_time))
-        print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-        print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-        print("  validation accuracy:\t\t{:.2f} %".format(
-            val_acc / val_batches * 100))
-
-    # After training, we compute and print the test error:
-    test_err = 0
-    test_acc = 0
-    test_batches = 0
-    for batch in iterate_minibatches(X_test, y_test, 500, shuffle=False):
-        inputs, targets = batch
-        err, acc = val_fn(inputs, targets)
-        test_err += err
-        test_acc += acc
-        test_batches += 1
-    print("Final results:")
-    print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
-    print("  test accuracy:\t\t{:.2f} %".format(
-        test_acc / test_batches * 100))
-
-
-
-
     ###############
     # TRAIN MODEL #
     ###############
@@ -145,7 +95,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
                                   # on the validation set; in this case we
                                   # check every epoch
 
-    best_validation_loss = numpy.inf
+    best_validation_loss = np.inf
     best_iter = 0
     test_score = 0.
     start_time = timeit.default_timer()
@@ -168,7 +118,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
                 # compute zero-one loss on validation set
                 validation_losses = [val_fn(i) for i
                                      in range(n_valid_batches)]
-                this_validation_loss = numpy.mean(validation_losses)
+                this_validation_loss = np.mean(validation_losses)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches,
                        this_validation_loss * 100.))

@@ -26,16 +26,16 @@ def load_data(test_num = np.inf):
         img = Image.open(img_path)
         img_array = np.array(img)
 
-        train_set_y.append(img_array)
-
         ### Get input/target from the images
         center = (int(np.floor(img_array.shape[0] / 2.)), int(np.floor(img_array.shape[1] / 2.)))
         if len(img_array.shape) == 3:
             input = np.copy(img_array)
             input[center[0]-16:center[0]+16, center[1]-16:center[1]+16, :] = 0
             target = img_array[center[0]-16:center[0]+16, center[1] - 16:center[1]+16, :]
+            train_set_x.append(input)      
+            train_set_y.append(img_array)
+              
 
-        train_set_x.append(input)
 
     #Validation set
 
@@ -43,7 +43,7 @@ def load_data(test_num = np.inf):
     
     val_imgs = glob.glob(val_data_path + "/*.jpg")   
     val_set_x = []
-    val_set_y = [] 
+    val_set_y = []
 
     for i, img_path in enumerate(val_imgs):
         if i > test_num:
@@ -51,16 +51,16 @@ def load_data(test_num = np.inf):
         img = Image.open(img_path)
         img_array = np.array(img)
 
-        val_set_x.append(img_array)
-
         ### Get input/target from the images
         center = (int(np.floor(img_array.shape[0] / 2.)), int(np.floor(img_array.shape[1] / 2.)))
         if len(img_array.shape) == 3:
             input = np.copy(img_array)
             input[center[0]-16:center[0]+16, center[1]-16:center[1]+16, :] = 0
             target = img_array[center[0]-16:center[0]+16, center[1] - 16:center[1]+16, :]
+            val_set_x.append(input)
+            val_set_y.append(img_array)     
+            
 
-        val_set_y.append(input)     
 
         # Image.fromarray(img_array).show()
         # Image.fromarray(input).show()
@@ -84,12 +84,12 @@ def load_data(test_num = np.inf):
                                  borrow=borrow)
         return shared_x, shared_y
 
-    valid_set_x, valid_set_y = shared_dataset(val_set_x, val_set_y)
-    train_set_x, train_set_y = shared_dataset(train_set_x, train_set_y)
+    valid_shared_set_x, valid_shared_set_y = shared_dataset(val_set_x, val_set_y)
+    train_shared_set_x, train_shared_set_y = shared_dataset(train_set_x, train_set_y)
 
-    rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y)]
+    rval = [(train_shared_set_x, train_shared_set_y), (valid_shared_set_x, valid_shared_set_y)]
 
     return rval
 
 if __name__ == '__main__':
-    load_data()
+    load_data(3)
