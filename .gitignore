@@ -1,1 +1,4 @@
 .DS_Store
+data/
+code/__pycache__
+code/unused
