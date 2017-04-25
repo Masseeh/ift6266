@@ -7,15 +7,33 @@ import theano
 import theano.tensor as T
 from common import load_data
 from models import build_convAutoencoder as cnn
+import logging
 
 import lasagne
 
-def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntraining=False):
+def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntraining=False, num_train=None):
+
+    # create logger with 'model'
+    logger = logging.getLogger('model')
+    logger.setLevel(logging.INFO)
+
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('dump.log')
+    fh.setLevel(logging.INFO)
+
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+
+    # add the handlers to the logger
+    logger.addHandler(fh)   
+    logger.addHandler(ch)
 
     # Load the dataset
-    print("Loading data...")
+    # print("Loading data...")
+    logger.info("Loading data...")
 
-    datasets = load_data(10000)
+    datasets = load_data(num_train)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
@@ -34,13 +52,13 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
     y = T.tensor4('y')  # the labels are presented as rasterized images as well
 
     # Create neural network model (depending on first command line parameter)
-    print("Building model and compiling functions...")
+    logger.info("Building model and compiling functions...")
     if model == 'mlp':
         pass
     elif model == 'cnn':
         network = cnn(x)
     else:
-        print("Unrecognized model type %r." % model)
+        logger.info("Unrecognized model type %r." % model)
         return
 
     # Create a loss expression for training, i.e., a scalar objective we want
@@ -82,7 +100,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
     ###############
     # TRAIN MODEL #
     ###############
-    print('... training')
+    logger.info('... training')
     # early-stopping parameters
     patience = 10000  # look as this many examples regardless
     patience_increase = 2  # wait this much longer when a new best is
@@ -111,7 +129,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if iter % 100 == 0:
-                print('training @ iter = ', iter)
+                logger.info('training iter = %d', iter)
             cost_ij = train_fn(minibatch_index)
 
             train_losses += cost_ij
@@ -123,7 +141,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
                 validation_losses = [val_fn(i) for i
                                      in range(n_valid_batches)]
                 this_validation_loss = np.mean(validation_losses)
-                print('epoch %i, minibatch %i/%i, training error %f %%, validation error %f %%' %
+                logger.info('epoch %i, minibatch %i/%i, training error %f %%, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches, this_train_loss * 100.,
                        this_validation_loss * 100.))
                 
@@ -157,10 +175,10 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
                 break
 
     end_time = timeit.default_timer()
-    print('Optimization complete.')
-    print('Best validation score of %f %% obtained at iteration %i, ' %
+    logger.info('Optimization complete.')
+    logger.info('Best validation score of %f %% obtained at iteration %i, ' %
           (best_validation_loss * 100., best_iter + 1))
-    print(('The code for file ' +
+    logger.info(('The code for file ' +
            os.path.split(__file__)[1] + ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
 
     # Dump the network weights to a file:
@@ -173,4 +191,4 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
 
     
 if __name__ == '__main__':
-    main()
+    main(dumpIntraining=True, num_train=1000)

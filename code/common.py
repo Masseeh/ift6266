@@ -5,23 +5,28 @@ import numpy as np
 import PIL.Image as Image
 
 import theano
+import logging
+
 
 
 def load_data(test_num = np.inf):
 
+    # create logger with 'model'
+    logger = logging.getLogger('model')
+    
     train_data_path = os.path.join(os.path.split(__file__)[0], "..", "data", "inpainting", "train2014")
     val_data_path = os.path.join(os.path.split(__file__)[0], "..", "data", "inpainting", "val2014")
     
     #Training set
 
-    print(train_data_path + "/*.jpg")
+    logger.info(train_data_path + "/*.jpg")
     train_imgs = glob.glob(train_data_path + "/*.jpg")
 
     train_set_x = []
     train_set_y = []
 
     for i, img_path in enumerate(train_imgs):
-        if i > test_num:
+        if test_num is not None and i > test_num:
             break
         img = Image.open(img_path)
         img_array = np.array(img)
@@ -43,14 +48,14 @@ def load_data(test_num = np.inf):
 
     #Validation set
 
-    print(val_data_path + "/*.jpg")
+    logger.info(val_data_path + "/*.jpg")
     
     val_imgs = glob.glob(val_data_path + "/*.jpg")   
     val_set_x = []
     val_set_y = []
 
     for i, img_path in enumerate(val_imgs):
-        if i > test_num:
+        if test_num is not None and i > test_num:
             break
         img = Image.open(img_path)
         img_array = np.array(img)
