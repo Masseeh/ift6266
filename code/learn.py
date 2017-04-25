@@ -1,7 +1,7 @@
 import sys
 import os
 import timeit
-
+from __future__ import print_function
 import numpy as np
 import theano
 import theano.tensor as T
