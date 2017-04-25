@@ -130,7 +130,13 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
 
             if iter % 100 == 0:
                 logger.info('training iter = %d', iter)
+
+
+            # each batch time span
+            batch_time = timeit.default_timer()
             cost_ij = train_fn(minibatch_index)
+            batch_time = timeit.default_timer() - batch_time
+            logger.info('minibatch %d took %d minutes = ', minibatch_index, batch_time/60.)
 
             train_losses += cost_ij
 
@@ -184,11 +190,10 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
     # Dump the network weights to a file:
     np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
     
-    # And load them again later on like this:
     # with np.load('model.npz') as f:
     #     param_values = [f['arr_%d' % i] for i in range(len(f.files))]
     # lasagne.layers.set_all_param_values(network, param_values)
 
     
 if __name__ == '__main__':
-    main(dumpIntraining=True, num_train=1000)
+    main(dumpIntraining=True)
