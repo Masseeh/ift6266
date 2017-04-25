@@ -5,7 +5,7 @@ import timeit
 import numpy as np
 import theano
 import theano.tensor as T
-from common import load_data
+from common import load_data, shared_dataset
 from models import build_convAutoencoder as cnn
 import logging
 
@@ -37,17 +37,19 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     valid_set_x, valid_set_y = datasets[1]
 
     # compute number of minibatches for training, validation and testing
-    n_train_batches = train_set_x.get_value(borrow=True).shape[0]
-    n_valid_batches = valid_set_x.get_value(borrow=True).shape[0]
+    n_train_batches = train_set_x.shape[0]
+    n_valid_batches = valid_set_x.shape[0]
     n_train_batches //= batch_size
     n_valid_batches //= batch_size
+
+    x_gpu_set, y_gpu_set = shared_dataset(shape=(5 * batch_size, 3, 64, 64))
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
 
     # start-snippet-1
-    x = T.tensor4('x')   # the data is presented as rasterized images
-    y = T.tensor4('y')  # the labels are presented as rasterized images as well
+    x = T.tensor4('x', dtype=theano.config.floatX)   # the data is presented as rasterized images
+    y = T.tensor4('y', dtype=theano.config.floatX)  # the labels are presented as rasterized images as well
 
     # Create neural network model (depending on first command line parameter)
     logger.info("Building model and compiling functions...")
@@ -80,8 +82,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
         loss,
         updates=updates,
         givens={
-            x: train_set_x[index * batch_size: (index + 1) * batch_size],
-            y: train_set_y[index * batch_size: (index + 1) * batch_size]
+            x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
+            y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
         }
     )
 
@@ -90,8 +92,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
         [index],
         loss,
         givens={
-            x: valid_set_x[index * batch_size: (index + 1) * batch_size],
-            y: valid_set_y[index * batch_size: (index + 1) * batch_size]
+            x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
+            y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
         }
     )
 
@@ -121,33 +123,45 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
 
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
-        train_losses = 0
+        train_losses = []
         for minibatch_index in range(n_train_batches):
 
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
+            if minibatch_index % 5 == 0:
+                logger.info("load training batch %d into gpu" , minibatch_index)
+                x_gpu_set.set_value(train_set_x[minibatch_index * batch_size: (minibatch_index + 4) * batch_size])
+                y_gpu_set.set_value(train_set_y[minibatch_index * batch_size: (minibatch_index + 4) * batch_size])
+
             if iter % 100 == 0:
                 logger.info('training iter = %d', iter)
 
-
-            # each batch time span
-            batch_time = timeit.default_timer()
             cost_ij = train_fn(minibatch_index)
-            batch_time = timeit.default_timer() - batch_time
-            logger.info('minibatch %d took %d minutes = ', minibatch_index, batch_time/60.)
 
-            train_losses += cost_ij
+            train_losses.append(cost_ij)
 
             if (iter + 1) % validation_frequency == 0:
 
-                this_train_loss = train_losses/n_train_batches
-                # compute zero-one loss on validation set
-                validation_losses = [val_fn(i) for i
-                                     in range(n_valid_batches)]
+                this_train_loss = np.mean(train_losses)
+                train_losses = []
+                # compute loss on validation set
+                validation_losses = []
+
+                for val_idx in range(n_valid_batches):
+
+                    if val_idx % 5 == 0:
+                        logger.info("load validation batch %d into gpu" , val_idx)
+                        x_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 4) * batch_size])
+                        y_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 4) * batch_size])
+                    
+                    val_cost_ij = val_fn(val_idx)
+
+                    validation_losses.append(val_cost_ij)
+
                 this_validation_loss = np.mean(validation_losses)
                 logger.info('epoch %i, minibatch %i/%i, training error %f %%, validation error %f %%' %
-                      (epoch, minibatch_index + 1, n_train_batches, this_train_loss * 100.,
-                       this_validation_loss * 100.))
+                    (epoch, minibatch_index + 1, n_train_batches, this_train_loss * 100.,
+                    this_validation_loss * 100.))
                 
                 if dumpIntraining:
                     np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
@@ -194,4 +208,4 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
 
     
 if __name__ == '__main__':
-    main(dumpIntraining=True, num_train=1000)
+    main(dumpIntraining=True, num_train=2000)

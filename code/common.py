@@ -8,7 +8,19 @@ import PIL.Image as Image
 import theano
 import logging
 
+def shared_dataset(shape, borrow=True):
+    """ Function that loads the dataset into shared variables
 
+    The reason we store our dataset in shared variables is to allow
+    Theano to copy it into the GPU memory (when code is run on GPU).
+    Since copying data into the GPU is slow, copying a minibatch everytime
+    is needed (the default behaviour if the data is not in a shared
+    variable) would lead to a large decrease in performance.
+    """
+    shared_x = theano.shared(np.zeros(shape), borrow=borrow)
+    shared_y = theano.shared(np.zeros(shape), borrow=borrow)
+
+    return shared_x, shared_y
 
 def load_data(test_num = np.inf):
 
@@ -79,27 +91,12 @@ def load_data(test_num = np.inf):
         # Image.fromarray(target).show()
         # print(i, caption_dict[cap_id])
 
-    def shared_dataset(data_x , data_y, borrow=True):
-        """ Function that loads the dataset into shared variables
+    val_set_x = np.asarray(val_set_x, dtype=theano.config.floatX)
+    val_set_y = np.asarray(val_set_x, dtype=theano.config.floatX)
+    train_set_x = np.asarray(train_set_x, dtype=theano.config.floatX)
+    train_set_y = np.asarray(train_set_x, dtype=theano.config.floatX)
 
-        The reason we store our dataset in shared variables is to allow
-        Theano to copy it into the GPU memory (when code is run on GPU).
-        Since copying data into the GPU is slow, copying a minibatch everytime
-        is needed (the default behaviour if the data is not in a shared
-        variable) would lead to a large decrease in performance.
-        """
-        shared_x = theano.shared(np.asarray(data_x,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        shared_y = theano.shared(np.asarray(data_y,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        return shared_x, shared_y
-
-    valid_shared_set_x, valid_shared_set_y = shared_dataset(val_set_x, val_set_y)
-    train_shared_set_x, train_shared_set_y = shared_dataset(train_set_x, train_set_y)
-
-    rval = [(train_shared_set_x, train_shared_set_y), (valid_shared_set_x, valid_shared_set_y)]
+    rval = [(train_set_x, train_set_y), (val_set_x, val_set_y)]
 
     return rval
 

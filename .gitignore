@@ -4,3 +4,5 @@ code/__pycache__
 code/unused
 .vscode/
 code/dump.log
+code/model.npz
+code/*.pyc
