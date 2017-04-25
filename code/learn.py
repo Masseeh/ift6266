@@ -10,12 +10,12 @@ from models import build_convAutoencoder as cnn
 
 import lasagne
 
-def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
+def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntraining=False):
 
     # Load the dataset
     print("Loading data...")
 
-    datasets = load_data(499)
+    datasets = load_data(10000)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
@@ -105,6 +105,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
 
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
+        train_losses = 0
         for minibatch_index in range(n_train_batches):
 
             iter = (epoch - 1) * n_train_batches + minibatch_index
@@ -113,16 +114,22 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
                 print('training @ iter = ', iter)
             cost_ij = train_fn(minibatch_index)
 
+            train_losses += cost_ij
+
             if (iter + 1) % validation_frequency == 0:
 
+                this_train_loss = train_losses/n_train_batches
                 # compute zero-one loss on validation set
                 validation_losses = [val_fn(i) for i
                                      in range(n_valid_batches)]
                 this_validation_loss = np.mean(validation_losses)
-                print('epoch %i, minibatch %i/%i, validation error %f %%' %
-                      (epoch, minibatch_index + 1, n_train_batches,
+                print('epoch %i, minibatch %i/%i, training error %f %%, validation error %f %%' %
+                      (epoch, minibatch_index + 1, n_train_batches, this_train_loss * 100.,
                        this_validation_loss * 100.))
-
+                
+                if dumpIntraining:
+                    np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
+                    
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
 
@@ -156,9 +163,9 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500):
     print(('The code for file ' +
            os.path.split(__file__)[1] + ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
 
-    # Optionally, you could now dump the network weights to a file like this:
-    # np.savez('model.npz', *lasagne.layers.get_all_param_values(network))
-    #
+    # Dump the network weights to a file:
+    np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
+    
     # And load them again later on like this:
     # with np.load('model.npz') as f:
     #     param_values = [f['arr_%d' % i] for i in range(len(f.files))]

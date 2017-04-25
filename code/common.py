@@ -29,11 +29,15 @@ def load_data(test_num = np.inf):
         ### Get input/target from the images
         center = (int(np.floor(img_array.shape[0] / 2.)), int(np.floor(img_array.shape[1] / 2.)))
         if len(img_array.shape) == 3:
+            img_array = np.transpose(img_array, (2, 0, 1))
             input = np.copy(img_array)
-            input[center[0]-16:center[0]+16, center[1]-16:center[1]+16, :] = 0
-            target = img_array[center[0]-16:center[0]+16, center[1] - 16:center[1]+16, :]
+            input[:, center[0]-16:center[0]+16, center[1]-16:center[1]+16] = 0
+            target = img_array[:, center[0]-16:center[0]+16, center[1] - 16:center[1]+16]
             train_set_x.append(input)      
             train_set_y.append(img_array)
+            # Image.fromarray(img_array).show()
+            # Image.fromarray(input).show()
+            # Image.fromarray(target).show()
               
 
 
@@ -54,11 +58,13 @@ def load_data(test_num = np.inf):
         ### Get input/target from the images
         center = (int(np.floor(img_array.shape[0] / 2.)), int(np.floor(img_array.shape[1] / 2.)))
         if len(img_array.shape) == 3:
+            img_array = np.transpose(img_array, (2, 0, 1))
             input = np.copy(img_array)
-            input[center[0]-16:center[0]+16, center[1]-16:center[1]+16, :] = 0
-            target = img_array[center[0]-16:center[0]+16, center[1] - 16:center[1]+16, :]
+            input[:, center[0]-16:center[0]+16, center[1]-16:center[1]+16] = 0
+            target = img_array[:, center[0]-16:center[0]+16, center[1] - 16:center[1]+16]
             val_set_x.append(input)
             val_set_y.append(img_array)     
+            
             
 
 
