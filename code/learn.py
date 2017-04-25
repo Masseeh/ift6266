@@ -18,7 +18,7 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
     logger.setLevel(logging.INFO)
 
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('dump.log')
+    fh = logging.FileHandler(os.path.join(os.path.split(__file__)[0],'dump.log'))
     fh.setLevel(logging.INFO)
 
     # create console handler with a higher log level
