@@ -11,7 +11,7 @@ import logging
 
 import lasagne
 
-def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntraining=False, num_train=None):
+def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntraining=False, num_train=None):
 
     logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(message)s',
