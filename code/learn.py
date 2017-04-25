@@ -13,20 +13,18 @@ import lasagne
 
 def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntraining=False, num_train=None):
 
+    logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(message)s',
+                    filename=os.path.join(os.path.split(__file__)[0],'dump.log'))
     # create logger with 'model'
     logger = logging.getLogger('model')
     logger.setLevel(logging.INFO)
-
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler(os.path.join(os.path.split(__file__)[0],'dump.log'))
-    fh.setLevel(logging.INFO)
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
 
-    # add the handlers to the logger
-    logger.addHandler(fh)   
+    # add the handlers to the logger   
     logger.addHandler(ch)
 
     # Load the dataset
@@ -196,4 +194,4 @@ def main(model='cnn',learning_rate=0.1, n_epochs=200, batch_size=500, dumpIntrai
 
     
 if __name__ == '__main__':
-    main(dumpIntraining=True)
+    main(dumpIntraining=True, num_train=1000)
