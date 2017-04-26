@@ -17,8 +17,8 @@ def shared_dataset(shape, borrow=True):
     is needed (the default behaviour if the data is not in a shared
     variable) would lead to a large decrease in performance.
     """
-    shared_x = theano.shared(np.zeros(shape, dtype=float32), borrow=borrow)
-    shared_y = theano.shared(np.zeros(shape, dtype=float32), borrow=borrow)
+    shared_x = theano.shared(np.zeros(shape, dtype=theano.config.floatX), borrow=borrow)
+    shared_y = theano.shared(np.zeros(shape, dtype=theano.config.floatX), borrow=borrow)
 
     return shared_x, shared_y
 
