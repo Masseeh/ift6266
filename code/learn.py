@@ -129,14 +129,14 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if minibatch_index % 5 == 0:
-                logger.info("load training batch %d into gpu" , minibatch_index)
-                x_gpu_set.set_value(train_set_x[minibatch_index * batch_size: (minibatch_index + 4) * batch_size])
-                y_gpu_set.set_value(train_set_y[minibatch_index * batch_size: (minibatch_index + 4) * batch_size])
+                logger.info("epoch %d , load training batch %d into gpu" ,epoch ,minibatch_index)
+                x_gpu_set.set_value(train_set_x[minibatch_index * batch_size: (minibatch_index + 5) * batch_size])
+                y_gpu_set.set_value(train_set_y[minibatch_index * batch_size: (minibatch_index + 5) * batch_size])
 
             if iter % 100 == 0:
                 logger.info('training iter = %d', iter)
 
-            cost_ij = train_fn(minibatch_index)
+            cost_ij = train_fn(minibatch_index%5)
 
             train_losses.append(cost_ij)
 
@@ -150,11 +150,11 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
                 for val_idx in range(n_valid_batches):
 
                     if val_idx % 5 == 0:
-                        logger.info("load validation batch %d into gpu" , val_idx)
-                        x_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 4) * batch_size])
-                        y_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 4) * batch_size])
+                        logger.info("epoch %d, load validation batch %d into gpu" ,epoch ,val_idx)
+                        x_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 5) * batch_size])
+                        y_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 5) * batch_size])
                     
-                    val_cost_ij = val_fn(val_idx)
+                    val_cost_ij = val_fn(val_idx%5)
 
                     validation_losses.append(val_cost_ij)
 
