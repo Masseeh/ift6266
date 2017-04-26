@@ -3,10 +3,9 @@
 #PBS -l walltime=00:30:00
 #PBS -j oe
 #PBS -N mamin-ift6266
-#-q soumet
 #PBS -r n
-#-m ba
-#-M masseeh.amin@gmail.com
+#PBS -m ba
+#PBS -M masseeh.amin@gmail.com
 #PBS -V
 # --------------------------------------------------------------
 module add python/3.5.1
