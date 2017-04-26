@@ -208,4 +208,7 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
 
     
 if __name__ == '__main__':
-    main(dumpIntraining=True, num_train=2000)
+    num_train = None
+    if len(sys.argv) == 2:
+        num_train = int(sys.argv[1])
+    main(dumpIntraining=True, num_train=num_train)

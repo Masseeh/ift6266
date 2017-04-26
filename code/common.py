@@ -22,7 +22,7 @@ def shared_dataset(shape, borrow=True):
 
     return shared_x, shared_y
 
-def load_data(test_num = np.inf):
+def load_data(test_num):
 
     # create logger with 'model'
     logger = logging.getLogger('model')
