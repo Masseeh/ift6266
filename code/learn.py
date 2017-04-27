@@ -42,7 +42,7 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     n_train_batches //= batch_size
     n_valid_batches //= batch_size
 
-    x_gpu_set, y_gpu_set = shared_dataset(shape=(5 * batch_size, 3, 64, 64))
+    x_gpu_set, y_gpu_set = shared_dataset(shapeX=(5 * batch_size, 3, 64, 64), shapeY=(5 * batch_size, 3, 32, 32))
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
@@ -66,7 +66,6 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     prediction = lasagne.layers.get_output(network)
     loss = lasagne.objectives.squared_error(prediction, y)
     loss = loss.mean()
-    # We could add some weight decay as well here, see lasagne.regularization.
 
     # Create update expressions for training, i.e., how to modify the
     # parameters at each training step. Here, we'll use Stochastic Gradient
@@ -152,7 +151,7 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
                     if val_idx % 5 == 0:
                         logger.info("epoch %d, load validation batch %d into gpu" ,epoch ,val_idx)
                         x_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 5) * batch_size])
-                        y_gpu_set.set_value(valid_set_x[val_idx * batch_size: (val_idx + 5) * batch_size])
+                        y_gpu_set.set_value(valid_set_y[val_idx * batch_size: (val_idx + 5) * batch_size])
                     
                     val_cost_ij = val_fn(val_idx%5)
 
@@ -160,8 +159,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
 
                 this_validation_loss = np.mean(validation_losses)
                 logger.info('epoch %i, minibatch %i/%i, training error %f %%, validation error %f %%' %
-                    (epoch, minibatch_index + 1, n_train_batches, this_train_loss * 100.,
-                    this_validation_loss * 100.))
+                    (epoch, minibatch_index + 1, n_train_batches, this_train_loss,
+                    this_validation_loss))
                 
                 if dumpIntraining:
                     np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
@@ -196,8 +195,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     logger.info('Optimization complete.')
     logger.info('Best validation score of %f %% obtained at iteration %i, ' %
           (best_validation_loss * 100., best_iter + 1))
-    logger.info(('The code for file ' +
-           os.path.split(__file__)[1] + ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
+    logger.info('The code for file ' +
+           os.path.split(__file__)[1] + ' ran for %.2fm' ,((end_time - start_time) / 60.))
 
     # Dump the network weights to a file:
     np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
@@ -211,4 +210,4 @@ if __name__ == '__main__':
     num_train = None
     if len(sys.argv) == 2:
         num_train = int(sys.argv[1])
-    main(dumpIntraining=True, num_train=num_train)
+    main(dumpIntraining=True, num_train=70)
