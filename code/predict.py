@@ -10,7 +10,7 @@ import lasagne
 
 def predict(model="cnn"):
 
-    valid_set_x, valid_set_y = load_data_predict(70)
+    valid_set_x, valid_set_y = load_data_predict(3)
 
     # start-snippet-1
     x = T.tensor4('x', dtype=theano.config.floatX)   # the data is presented as rasterized images
@@ -45,10 +45,8 @@ def predict(model="cnn"):
         tobe_img[center[0]-16:center[0]+16, center[1]-16:center[1]+16, :] = generated
         img_tobe = Image.fromarray(tobe_img)
         img_org = Image.fromarray(org_img)
-        img_tobe.show()
-        img_org.show()
-        img_tobe.save(os.path.join(os.path.split(__file__)[0], "..", "data", "prediction", i + "-tobe" + ".jpg"))
-        img_org.save(os.path.join(os.path.split(__file__)[0], "..", "data", "prediction", i + "-org" + ".jpg"))
+        img_tobe.save(os.path.join(os.path.split(__file__)[0], "..", "data", "prediction", str(i) + "-tobe.png"))
+        img_org.save(os.path.join(os.path.split(__file__)[0], "..", "data", "prediction", str(i) + "-org.png"))
         
 if __name__ == '__main__':
     predict()
