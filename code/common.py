@@ -189,8 +189,9 @@ def load_data_dcga(test_num):
             img_array = np.transpose(img_array, (2, 0, 1))/127.5 -1
             input = np.copy(img_array)
             input[:, center[0]-16:center[0]+16, center[1]-16:center[1]+16] = 0
+            target = img_array[:, center[0]-16:center[0]+16, center[1] - 16:center[1]+16]            
             train_set_x.append(input)      
-            train_set_y.append(img_array)
+            train_set_y.append(target)
               
 
 
@@ -214,8 +215,9 @@ def load_data_dcga(test_num):
             img_array = np.transpose(img_array, (2, 0, 1))/127.5 -1
             input = np.copy(img_array)
             input[:, center[0]-16:center[0]+16, center[1]-16:center[1]+16] = 0
+            target = img_array[:, center[0]-16:center[0]+16, center[1] - 16:center[1]+16]            
             val_set_x.append(input)
-            val_set_y.append(img_array)  
+            val_set_y.append(target)  
             
 
     val_set_x = np.asarray(val_set_x, dtype=theano.config.floatX)

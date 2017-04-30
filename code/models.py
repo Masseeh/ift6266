@@ -15,19 +15,16 @@ def build_discriminator(input_var=None):
 
     lrelu = lasagne.nonlinearities.LeakyRectify(0.2)
 
-    layer = lasagne.layers.InputLayer(shape=(None, 3, 64, 64), input_var=input_var)
+    layer = lasagne.layers.InputLayer(shape=(None, 3, 32, 32), input_var=input_var)
     
-    # 64x32x32
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
-
     # 64x16x16
     layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
 
     # 64x8x8
     layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
 
-    # 128x4x4
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 128, 5, stride=2, pad=2, nonlinearity=lrelu))
+    # 64x4x4
+    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
 
     # output layer
     layer = lasagne.layers.DenseLayer(layer, 1, nonlinearity=lasagne.nonlinearities.sigmoid)
@@ -58,10 +55,7 @@ def build_generator(input_var=None):
         # 64x16x16
         network = batch_norm(Deconv2DLayer(network, 64, 5, stride=2, pad=2))
 
-        # 64x32x32
-        network = batch_norm(Deconv2DLayer(network, 64, 5, stride=2, pad=2))
-
-        # 3x64x64
+        # 3x32x32
         network = Deconv2DLayer(network, 3, 5, stride=2, pad=2, nonlinearity=lasagne.nonlinearities.tanh)
 
         print ("Generator output:", network.output_shape)
