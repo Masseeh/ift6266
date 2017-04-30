@@ -1,21 +1,23 @@
-from __future__ import print_function
 import sys
 import os
 import timeit
+import logging
+
 import numpy as np
 import theano
 import theano.tensor as T
-from common import load_data, shared_dataset
-from models import build_convAutoencoder as cnn
-import logging
 
 import lasagne
 
-def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntraining=False, num_train=None):
+from models import build_discriminator, build_generator
+
+from common import load_data_dcga, shared_dataset
+
+def main(n_epochs=200, learning_rate=0.0009, batch_size=64, num_train=None, dumpIntraining=True, ae_weight=1):
 
     logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(message)s',
-                    filename=os.path.join(os.path.split(__file__)[0],'dump.log'))
+                    filename=os.path.join(os.path.split(__file__)[0],'dump_dcgan.log'))
     # create logger with 'model'
     logger = logging.getLogger('model')
     logger.setLevel(logging.INFO)
@@ -27,11 +29,10 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     # add the handlers to the logger   
     logger.addHandler(ch)
 
-    # Load the dataset
-    # print("Loading data...")
-    logger.info("Loading data...")
 
-    datasets = load_data(num_train)
+    # Load the dataset
+    print("Loading data...")
+    datasets = load_data_dcga(num_train)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
@@ -42,7 +43,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     n_train_batches //= batch_size
     n_valid_batches //= batch_size
 
-    x_gpu_set, y_gpu_set = shared_dataset(shapeX=(5 * batch_size, 3, 64, 64), shapeY=(5 * batch_size, 3, 32, 32))
+    x_gpu_set, y_gpu_set = shared_dataset(shapeX=(5 * batch_size, 3, 64, 64), shapeY=(5 * batch_size, 3, 64, 64))
+
 
     # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
@@ -51,50 +53,54 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     x = T.tensor4('x', dtype=theano.config.floatX)   # the data is presented as rasterized images
     y = T.tensor4('y', dtype=theano.config.floatX)  # the labels are presented as rasterized images as well
 
-    # Create neural network model (depending on first command line parameter)
-    logger.info("Building model and compiling functions...")
-    if model == 'mlp':
-        pass
-    elif model == 'cnn':
-        network = cnn(x)
-    else:
-        logger.info("Unrecognized model type %r." % model)
-        return
+    # Create neural network model
+    print("Building model and compiling functions...")
+    generator , ae = build_generator(x)
+    discriminator = build_discriminator(y)
 
-    # Create a loss expression for training, i.e., a scalar objective we want
-    # to minimize (L2 error):
-    prediction = lasagne.layers.get_output(network)
-    loss = lasagne.objectives.squared_error(prediction, y)
-    loss = loss.mean()
+    # Create expression for passing real data through the discriminator
+    real_out = lasagne.layers.get_output(discriminator)
+    # Create expression for passing fake data through the discriminator
+    fake_out = lasagne.layers.get_output(discriminator, lasagne.layers.get_output(generator))
+    
+    # Create loss expressions
+    g_cost_d = lasagne.objectives.binary_crossentropy(fake_out, 1).mean()
 
-    # Create update expressions for training, i.e., how to modify the
-    # parameters at each training step. Here, we'll use Stochastic Gradient
-    # Descent (SGD) with Adam.
-    params = lasagne.layers.get_all_params(network, trainable=True)
+    discriminator_loss = (lasagne.objectives.binary_crossentropy(real_out, 1)
+            + lasagne.objectives.binary_crossentropy(fake_out, 0)).mean()
+
+    auto_encoder_loss = lasagne.objectives.squared_error(T.flatten(lasagne.layers.get_output(generator), 2) , T.flatten(y, 2)).mean()
+
+    generator_loss = g_cost_d + auto_encoder_loss / ae_weight
+    
+    # Create update expressions for training
+    generator_params = lasagne.layers.get_all_params(generator, trainable=True)
+
+    discriminator_params = lasagne.layers.get_all_params(discriminator, trainable=True)
+
     updates = lasagne.updates.adam(
-            loss, params, learning_rate=learning_rate)
+            generator_loss, generator_params, learning_rate=learning_rate)
+    updates.update(lasagne.updates.adam(
+            discriminator_loss, discriminator_params, learning_rate=learning_rate))
 
     # Compile a function performing a training step on a mini-batch (by giving
     # the updates dictionary) and returning the corresponding training loss:
-    train_fn = theano.function(
-        [index],
-        loss,
-        updates=updates,
-        givens={
-            x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
-            y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
-        }
-    )
+    train_fn = theano.function([index],
+                               [(real_out > .5).mean(),
+                                (fake_out < .5).mean()],
+                                updates=updates,
+                                givens={
+                                    x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
+                                    y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
+                                })
 
-    # Compile a second function computing the validation loss and accuracy:
-    val_fn = theano.function(
-        [index],
-        loss,
-        givens={
-            x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
-            y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
-        }
-    )
+    val_fn = theano.function([index],
+                               [(real_out > .5).mean(),
+                                (fake_out < .5).mean()],
+                                givens={
+                                    x: x_gpu_set[index * batch_size: (index + 1) * batch_size],
+                                    y: y_gpu_set[index * batch_size: (index + 1) * batch_size]
+                                })
 
     ###############
     # TRAIN MODEL #
@@ -163,7 +169,8 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
                     this_validation_loss))
                 
                 if dumpIntraining:
-                    np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
+                    np.savez('dcgan_gen.npz', *lasagne.layers.get_all_param_values(generator))
+                    np.savez('dcgan_disc.npz', *lasagne.layers.get_all_param_values(discriminator))
                     
                 # if we got the best validation score until now
                 if this_validation_loss < best_validation_loss:
@@ -187,14 +194,6 @@ def main(model='cnn',learning_rate=0.0009, n_epochs=200, batch_size=64, dumpIntr
     logger.info('The code for file ' +
            os.path.split(__file__)[1] + ' ran for %.2fm' ,((end_time - start_time) / 60.))
 
-    # Dump the network weights to a file:
-    np.savez(os.path.join(os.path.split(__file__)[0], 'model.npz'), *lasagne.layers.get_all_param_values(network))
-    
-    # with np.load('model.npz') as f:
-    #     param_values = [f['arr_%d' % i] for i in range(len(f.files))]
-    # lasagne.layers.set_all_param_values(network, param_values)
-
-    
 if __name__ == '__main__':
     num_train = None
     if len(sys.argv) == 2:
