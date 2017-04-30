@@ -60,7 +60,7 @@ def build_generator(input_var=None):
 
         print ("Generator output:", network.output_shape)
 
-        return network , ae
+        return network
 
 def build_convAutoencoder(input_var=None):
 

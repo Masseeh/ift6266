@@ -3,7 +3,7 @@ data/
 code/__pycache__
 code/unused
 .vscode/
-code/dump.log
-code/model.npz
+code/*.log
+code/*.npz
 code/*.pyc
-.vscode/
+.vscode/ 

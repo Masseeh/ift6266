@@ -11,7 +11,7 @@ import lasagne
 
 from models import build_discriminator, build_generator
 
-from common import load_data_dcga, shared_dataset
+from common import load_data, shared_dataset
 
 def main(n_epochs=200, learning_rate=0.0009, batch_size=64, num_train=None, dumpIntraining=True, ae_weight=1):
 
@@ -32,7 +32,7 @@ def main(n_epochs=200, learning_rate=0.0009, batch_size=64, num_train=None, dump
 
     # Load the dataset
     print("Loading data...")
-    datasets = load_data_dcga(num_train)
+    datasets = load_data(num_train, weight=127.5, offset=-1)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
