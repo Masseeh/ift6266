@@ -18,19 +18,16 @@ def build_discriminator(input_var=None):
     layer = lasagne.layers.InputLayer(shape=(None, 3, 64, 64), input_var=input_var)
     
     # 64x32x32
+    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
+
+    # 64x16x16
+    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
+
+    # 64x8x8
+    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 64, 5, stride=2, pad=2, nonlinearity=lrelu))
+
+    # 128x4x4
     layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 128, 5, stride=2, pad=2, nonlinearity=lrelu))
-
-    # 128x16x16
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 256, 5, stride=2, pad=2, nonlinearity=lrelu))
-
-    # 256x8x8
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 128, 5, stride=2, pad=2, nonlinearity=lrelu))
-
-    # 512x4x4
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 512, 5, stride=2, pad=2, nonlinearity=lrelu))
-
-    # 1024x2x2
-    layer = batch_norm(lasagne.layers.Conv2DLayer(layer, 1024, 5, stride=2, pad=2, nonlinearity=lrelu))
 
     # output layer
     layer = lasagne.layers.DenseLayer(layer, 1, nonlinearity=lasagne.nonlinearities.sigmoid)
@@ -46,26 +43,20 @@ def build_generator(input_var=None):
         # 64x32x32
         ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 64, 5, stride=2, pad=2))
 
-        # 256x16x16
-        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 256, 5, stride=2, pad=2))
+        # 64x16x16
+        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 64, 5, stride=2, pad=2))
 
-        # 256x8x8
-        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 256, 5, stride=2, pad=2))
+        # 64x8x8
+        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 64, 5, stride=2, pad=2))
 
-        # 512x4x4
-        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 512, 5, stride=2, pad=2))
+        # 128x4x4
+        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 128, 5, stride=2, pad=2))
 
-        # 1024x2x2
-        ae = batch_norm(lasagne.layers.Conv2DLayer(ae, 1024, 5, stride=2, pad=2))
+        # 64x8x8
+        network = batch_norm(Deconv2DLayer(ae, 64, 5, stride=2, pad=2))
 
-        # 512x4x4
-        network = batch_norm(Deconv2DLayer(ae, 512, 5, stride=2, pad=2))
-
-        # 256x8x8
-        network = batch_norm(Deconv2DLayer(network, 256, 5, stride=2, pad=2))
-
-        # 256x16x16
-        network = batch_norm(Deconv2DLayer(network, 256, 5, stride=2, pad=2))
+        # 64x16x16
+        network = batch_norm(Deconv2DLayer(network, 64, 5, stride=2, pad=2))
 
         # 64x32x32
         network = batch_norm(Deconv2DLayer(network, 64, 5, stride=2, pad=2))
