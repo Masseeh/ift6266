@@ -4,7 +4,7 @@ For the starting point, I chose convolutional auto-encoder. It was my first expe
 For the architecture I used three layers of (Conv , Maxpooling) with filter size of 5 and 32 filters and pool size of 2. And for the bottle-neck there is a full connected neural net with 800 hidden units which represent latent variable.
 The resulted images are as follow:
 
-![alt text](https://github.com/Masseeh/ift6266/blob/master/docs/images/convae/0-org.png) 
+![alt text](images/convae/0-org.png) 
 ![alt text](https://github.com/Masseeh/ift6266/blob/master/docs/images/convae/0-tobe.png)
 
 
