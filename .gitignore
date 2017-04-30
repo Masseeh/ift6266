@@ -6,3 +6,4 @@ code/unused
 code/dump.log
 code/model.npz
 code/*.pyc
+.vscode/
