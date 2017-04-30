@@ -1,3 +1,13 @@
+## Next model : Conditional GANs
+
+In this model I tried to take advantages of generative models to solve the problem. The main idea is extracted from [this article](https://swarbrickjones.wordpress.com/2016/01/13/enhancing-images-using-deep-convolutional-generative-adversarial-networks-dcgans/). 
+
+The previous model was a simple convolutional auto-encoder. We extend the idea by adapting this model with GANs as follow. for the generator we used the convolutional auto-encoder with slightly different architectural improvement , from [DCGANS article](https://arxiv.org/abs/1511.06434) , and for the discriminator we used a regular convolution network with sigmoid layer at the end. The learning algorithm is exactly like the previous model.
+
+### Result to be posted
+
+
+
 ## First model : Convolutional auto-encoder
 
 For the starting point, I chose convolutional auto-encoder. It was my first experience to implement neural net using Theano. The network was trained using SGD (Adam) algorithm. 
